@@ -157,7 +157,7 @@ func (r *ReconcileKeycloakUser) Reconcile(request reconcile.Request) (reconcile.
 
 			// Get an authenticated keycloak api client for the instance
 			keycloakFactory := common.LocalConfigKeycloakFactory{}
-			authenticated, err := keycloakFactory.AuthenticatedClient(keycloak, false)
+			authenticated, err := keycloakFactory.AuthenticatedClient(keycloak, true)
 			if err != nil {
 				return r.ManageError(instance, err)
 			}
