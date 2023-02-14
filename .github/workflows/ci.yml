@@ -21,7 +21,7 @@ jobs:
       run: |
         make test/unit
     - name: Start minikube
-      uses: manusa/actions-setup-minikube@v2.4.2
+      uses: manusa/actions-setup-minikube@v2.7.2
       with:
         minikube version: 'v1.21.0'
         kubernetes version: 'v1.21.2'
