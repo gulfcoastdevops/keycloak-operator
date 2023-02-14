@@ -9,7 +9,7 @@
 
   jobs:
     publish:
-      if: github.repository == 'keycloak/keycloak-operator'
+      if: github.repository == 'gulfcoastdevops/keycloak-operator'
       runs-on: ubuntu-latest
       steps:
       - name: Checkout
@@ -17,12 +17,12 @@
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-        
+
       - name: Container metadata
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: quay.io/keycloak/keycloak-operator
+          images: ghcr.io/gulfcoastdevops/keycloak-operator
           flavor: |
             latest=false
           tags: |
@@ -31,12 +31,12 @@
             type=semver,pattern={{version}}-legacy
             type=semver,pattern={{major}}.{{minor}}-legacy
 
-      - name: Login to Quay
-        uses: docker/login-action@v1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
-          registry: quay.io
-          username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PAT }}
 
       - name: Build and push
         uses: docker/build-push-action@v2
