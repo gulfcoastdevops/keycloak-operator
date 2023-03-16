@@ -92,6 +92,9 @@ type KeycloakSpec struct {
 	// Defaults to false.
 	// +optional
 	DisableReplicasSyncing bool `json:"disableReplicasSyncing,omitempty"`
+
+	// +optional
+	PodAnnotations map[string]string `json:"podAnnotations"`
 }
 
 type DeploymentSpec struct {
