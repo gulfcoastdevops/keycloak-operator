@@ -107,7 +107,7 @@ type ReconcileKeycloakUser struct {
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileKeycloakUser) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileKeycloakUser) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling KeycloakUser")
 
@@ -133,7 +133,7 @@ func (r *ReconcileKeycloakUser) Reconcile(request reconcile.Request) (reconcile.
 	}
 
 	// Find the realms that this user should be added to based on the label selector
-	realms, err := common.GetMatchingRealms(r.context, r.client, instance.Spec.RealmSelector)
+	realms, err := common.GetMatchingRealms(ctx, r.client, instance.Spec.RealmSelector)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -145,7 +145,7 @@ func (r *ReconcileKeycloakUser) Reconcile(request reconcile.Request) (reconcile.
 			return r.ManageError(instance, errors.Errorf("users cannot be created for unmanaged keycloak realms"))
 		}
 
-		keycloaks, err := common.GetMatchingKeycloaks(r.context, r.client, realm.Spec.InstanceSelector)
+		keycloaks, err := common.GetMatchingKeycloaks(ctx, r.client, realm.Spec.InstanceSelector)
 		if err != nil {
 			return r.ManageError(instance, err)
 		}
@@ -178,7 +178,7 @@ func (r *ReconcileKeycloakUser) Reconcile(request reconcile.Request) (reconcile.
 			reconciler := NewKeycloakuserReconciler(keycloak, realm)
 			desiredState := reconciler.Reconcile(userState, instance)
 
-			actionRunner := common.NewClusterAndKeycloakActionRunner(r.context, r.client, r.scheme, instance, authenticated)
+			actionRunner := common.NewClusterAndKeycloakActionRunner(ctx, r.client, r.scheme, instance, authenticated)
 			err = actionRunner.RunAll(desiredState)
 			if err != nil {
 				return r.ManageError(instance, err)

@@ -106,7 +106,7 @@ func (i *ClusterActionRunner) Create(obj runtime.Object) error {
 		return err
 	}
 
-	err = i.client.Create(i.context, obj)
+	err = i.client.Create(i.context, obj.(client.Object))
 	if err != nil {
 		return err
 	}
@@ -120,11 +120,11 @@ func (i *ClusterActionRunner) Update(obj runtime.Object) error {
 		return err
 	}
 
-	return i.client.Update(i.context, obj)
+	return i.client.Update(i.context, obj.(client.Object))
 }
 
 func (i *ClusterActionRunner) Delete(obj runtime.Object) error {
-	return i.client.Delete(i.context, obj)
+	return i.client.Delete(i.context, obj.(client.Object))
 }
 
 // Create a new realm using the keycloak api
