@@ -61,7 +61,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           file: ./hack/goreleaser/Dockerfile
-          context: ./dist/truiem-operator_linux_amd64_v1
+          context: ./dist/keycloak-operator_linux_amd64_v1
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
