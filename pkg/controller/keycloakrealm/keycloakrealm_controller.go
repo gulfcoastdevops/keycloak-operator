@@ -98,7 +98,7 @@ type ReconcileKeycloakRealm struct {
 
 // Reconcile reads that state of the cluster for a KeycloakRealm object and makes changes based on the state read
 // and what is in the KeycloakRealm.Spec
-func (r *ReconcileKeycloakRealm) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileKeycloakRealm) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling KeycloakRealm")
 
@@ -127,7 +127,7 @@ func (r *ReconcileKeycloakRealm) Reconcile(request reconcile.Request) (reconcile
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	keycloaks, err := common.GetMatchingKeycloaks(r.context, r.client, instance.Spec.InstanceSelector)
+	keycloaks, err := common.GetMatchingKeycloaks(ctx, r.client, instance.Spec.InstanceSelector)
 	if err != nil {
 		return r.ManageError(instance, err)
 	}
@@ -151,7 +151,7 @@ func (r *ReconcileKeycloakRealm) Reconcile(request reconcile.Request) (reconcile
 		}
 
 		// Compute the current state of the realm
-		realmState := common.NewRealmState(r.context, keycloak)
+		realmState := common.NewRealmState(ctx, keycloak)
 
 		log.Info(fmt.Sprintf("read state for keycloak %v/%v, realm %v/%v",
 			keycloak.Namespace,
@@ -168,7 +168,7 @@ func (r *ReconcileKeycloakRealm) Reconcile(request reconcile.Request) (reconcile
 		// the desired state
 		reconciler := NewKeycloakRealmReconciler(keycloak)
 		desiredState := reconciler.Reconcile(realmState, instance)
-		actionRunner := common.NewClusterAndKeycloakActionRunner(r.context, r.client, r.scheme, instance, authenticated)
+		actionRunner := common.NewClusterAndKeycloakActionRunner(ctx, r.client, r.scheme, instance, authenticated)
 
 		// Run all actions to keep the realms updated
 		err = actionRunner.RunAll(desiredState)

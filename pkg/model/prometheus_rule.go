@@ -1,21 +1,24 @@
 package model
 
 import (
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/keycloak/keycloak-operator/pkg/apis/keycloak/v1alpha1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
+	oneMin := monitoringv1.Duration("1m")
+	fiveMin := monitoringv1.Duration("5m")
+
 	rules := []monitoringv1.Rule{{
 		Alert: "KeycloakJavaNonHeapThresholdExceeded",
 		Annotations: map[string]string{
 			"message": `{{ printf "%0.0f" $value }}% nonheap usage of {{ $labels.area }} in pod {{ $labels.pod }}, namespace {{ $labels.namespace }}.`,
 		},
 		Expr: intstr.FromString(`100 * jvm_memory_bytes_used{area="nonheap",namespace="` + cr.Namespace + `"} / jvm_memory_bytes_max{area="nonheap",namespace="` + cr.Namespace + `"} > 90`),
-		For:  "1m",
+		For:  &oneMin,
 		Labels: map[string]string{
 			"severity": "warning",
 		},
@@ -25,7 +28,7 @@ func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
 			"message": `Amount of time per minute spent on garbage collection of {{ $labels.area }} in pod {{ $labels.pod }}, namespace {{ $labels.namespace }} exceeds 90%. This could indicate that the available heap memory is insufficient.`,
 		},
 		Expr: intstr.FromString(`increase(jvm_gc_collection_seconds_sum{gc="PS Scavenge",namespace="` + cr.Namespace + `"}[1m]) > 1 * 60 * 0.9`),
-		For:  "1m",
+		For:  &oneMin,
 		Labels: map[string]string{
 			"severity": "warning",
 		},
@@ -35,7 +38,7 @@ func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
 			"message": `Amount of time per minute spent on garbage collection of {{ $labels.area }} in pod {{ $labels.pod }}, namespace {{ $labels.namespace }} exceeds 90%. This could indicate that the available heap memory is insufficient.`,
 		},
 		Expr: intstr.FromString(`increase(jvm_gc_collection_seconds_sum{gc="PS MarkSweep",namespace="` + cr.Namespace + `"}[1m]) > 1 * 60 * 0.9`),
-		For:  "1m",
+		For:  &oneMin,
 		Labels: map[string]string{
 			"severity": "warning",
 		},
@@ -45,7 +48,7 @@ func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
 			"message": `Number of threads in deadlock state of {{ $labels.area }} in pod {{ $labels.pod }}, namespace {{ $labels.namespace }}`,
 		},
 		Expr: intstr.FromString(`jvm_threads_deadlocked{namespace="` + cr.Namespace + `"} > 0`),
-		For:  "1m",
+		For:  &oneMin,
 		Labels: map[string]string{
 			"severity": "warning",
 		},
@@ -55,7 +58,7 @@ func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
 			"message": `More than 50 failed login attempts for realm {{ $labels.realm }}, provider {{ $labels.provider }}, namespace {{ $labels.namespace }} over the last 5 minutes. (Rate of {{ printf "%0f" $value }})`,
 		},
 		Expr: intstr.FromString(`rate(keycloak_failed_login_attempts{namespace="` + cr.Namespace + `"}[5m]) * 300 > 50`),
-		For:  "5m",
+		For:  &fiveMin,
 		Labels: map[string]string{
 			"severity": "warning",
 		},
@@ -65,7 +68,7 @@ func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
 			"message": `Keycloak instance in namespace {{ $labels.namespace }} has not been available for the last 5 minutes.`,
 		},
 		Expr: intstr.FromString(`(1 - absent(kube_pod_status_ready{namespace="` + cr.Namespace + `", condition="true"} * on (pod) group_left (label_component) kube_pod_labels{label_component="` + KeycloakDeploymentComponent + `", namespace="` + cr.Namespace + `"})) == 0`),
-		For:  "5m",
+		For:  &fiveMin,
 		Labels: map[string]string{
 			"severity": "critical",
 		},
@@ -75,7 +78,7 @@ func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
 			"message": `More than 10% the RH SSO API endpoints in namespace {{ $labels.namespace }} are taking longer than 1s for the last 5 minutes.`,
 		},
 		Expr: intstr.FromString(`(sum(rate(keycloak_request_duration_bucket{le="1000.0", namespace="` + cr.Namespace + `"}[5m])) by (job) / sum(rate(keycloak_request_duration_count{namespace="` + cr.Namespace + `"}[5m])) by (job)) < 0.90`),
-		For:  "5m",
+		For:  &fiveMin,
 		Labels: map[string]string{
 			"severity": "warning",
 		},
@@ -85,7 +88,7 @@ func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
 			"message": `More than 0.5% of the RH SSO API endpoints in namespace {{ $labels.namespace }} are taking longer than 10s for the last 5 minutes.`,
 		},
 		Expr: intstr.FromString(`(sum(rate(keycloak_request_duration_bucket{le="10000.0", namespace="` + cr.Namespace + `"}[5m])) by (job) / sum(rate(keycloak_request_duration_count{namespace="` + cr.Namespace + `"}[5m])) by (job)) < 0.995`),
-		For:  "5m",
+		For:  &fiveMin,
 		Labels: map[string]string{
 			"severity": "warning",
 		},
@@ -98,7 +101,7 @@ func PrometheusRule(cr *v1alpha1.Keycloak) *monitoringv1.PrometheusRule {
 				"message": `RH SSO database in namespace {{ $labels.namespace }} is not available for the last 5 minutes.`,
 			},
 			Expr: intstr.FromString(`(1 - absent(kube_pod_status_ready{namespace="` + cr.Namespace + `", condition="true"} * on (pod) group_left (label_component) kube_pod_labels{label_component="` + PostgresqlDeploymentComponent + `", namespace="` + cr.Namespace + `"})) == 0 `),
-			For:  "5m",
+			For:  &fiveMin,
 			Labels: map[string]string{
 				"severity": "critical",
 			},

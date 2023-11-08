@@ -91,7 +91,7 @@ type ReconcileKeycloakBackup struct {
 }
 
 // Reconcile reads that state of the cluster for a KeycloakBackup object and makes changes based on the state read
-func (r *ReconcileKeycloakBackup) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileKeycloakBackup) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling KeycloakBackup")
 
@@ -116,7 +116,7 @@ func (r *ReconcileKeycloakBackup) Reconcile(request reconcile.Request) (reconcil
 		return reconcile.Result{Requeue: false}, nil
 	}
 
-	keycloaks, err := common.GetMatchingKeycloaks(r.context, r.client, instance.Spec.InstanceSelector)
+	keycloaks, err := common.GetMatchingKeycloaks(ctx, r.client, instance.Spec.InstanceSelector)
 	if err != nil {
 		return r.ManageError(instance, err)
 	}
@@ -135,13 +135,13 @@ func (r *ReconcileKeycloakBackup) Reconcile(request reconcile.Request) (reconcil
 		}
 
 		currentState = common.NewBackupState(keycloak)
-		err = currentState.Read(r.context, instance, r.client)
+		err = currentState.Read(ctx, instance, r.client)
 		if err != nil {
 			return r.ManageError(instance, err)
 		}
 		reconciler := NewKeycloakBackupReconciler(keycloak)
 		desiredState := reconciler.Reconcile(currentState, instance)
-		actionRunner := common.NewClusterActionRunner(r.context, r.client, r.scheme, instance)
+		actionRunner := common.NewClusterActionRunner(ctx, r.client, r.scheme, instance)
 		err = actionRunner.RunAll(desiredState)
 		if err != nil {
 			return r.ManageError(instance, err)

@@ -14,9 +14,9 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
-	grafanav1alpha1 "github.com/integr8ly/grafana-operator/v3/pkg/apis/integreatly/v1alpha1"
+	grafanav1alpha1 "github.com/grafana-operator/grafana-operator/v5/api/v1beta1"
 	routev1 "github.com/openshift/api/route/v1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
@@ -116,7 +116,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	if err := common.WatchSecondaryResource(c, ControllerName, grafanav1alpha1.GrafanaDashboardKind, &grafanav1alpha1.GrafanaDashboard{}, &kc.Keycloak{}); err != nil {
+	if err := common.WatchSecondaryResource(c, ControllerName, "GrafanaDashboard", &grafanav1alpha1.GrafanaDashboard{}, &kc.Keycloak{}); err != nil {
 		return err
 	}
 
@@ -141,14 +141,14 @@ type ReconcileKeycloak struct {
 	recorder record.EventRecorder
 }
 
-func (r *ReconcileKeycloak) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileKeycloak) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Keycloak")
 
 	// Fetch the Keycloak instance
 	instance := &keycloakv1alpha1.Keycloak{}
 
-	err := r.client.Get(r.context, request.NamespacedName, instance)
+	err := r.client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.

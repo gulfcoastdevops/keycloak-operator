@@ -233,6 +233,10 @@ func KeycloakDeployment(cr *v1alpha1.Keycloak, dbSecret *v1.Secret, dbSSLSecret 
 							Image: Images.Images[KeycloakImage],
 							Ports: []v1.ContainerPort{
 								{
+									ContainerPort: 8080,
+									Protocol:      "TCP",
+								},
+								{
 									ContainerPort: KeycloakServicePort,
 									Protocol:      "TCP",
 								},
@@ -299,6 +303,10 @@ func KeycloakDeploymentReconciled(cr *v1alpha1.Keycloak, currentState *v13.State
 			Args:    cr.Spec.KeycloakDeploymentSpec.Experimental.Args,
 			Command: cr.Spec.KeycloakDeploymentSpec.Experimental.Command,
 			Ports: []v1.ContainerPort{
+				{
+					ContainerPort: 8080,
+					Protocol:      "TCP",
+				},
 				{
 					ContainerPort: KeycloakServicePort,
 					Protocol:      "TCP",
@@ -463,7 +471,7 @@ func addVolumesFromKeycloakCR(cr *v1alpha1.Keycloak, volumes []v1.Volume) []v1.V
 
 func livenessProbe() *v1.Probe {
 	return &v1.Probe{
-		Handler: v1.Handler{
+		ProbeHandler: v1.ProbeHandler{
 			Exec: &v1.ExecAction{
 				Command: []string{
 					"/bin/sh",
@@ -481,7 +489,7 @@ func livenessProbe() *v1.Probe {
 
 func readinessProbe() *v1.Probe {
 	return &v1.Probe{
-		Handler: v1.Handler{
+		ProbeHandler: v1.ProbeHandler{
 			Exec: &v1.ExecAction{
 				Command: []string{
 					"/bin/sh",
