@@ -35,7 +35,7 @@ archives:
     - goos: windows
       format: zip
     files:
-      - dist/config.yaml
+      - deploy/**/*
       - LICENSE
 checksum:
   name_template: 'checksums.txt'
@@ -49,9 +49,9 @@ changelog:
       - '^test:'
 release:
   name_template: "v{{.Version}}"
-  extra_files:
-    - glob: default.yaml
-    - glob: crds.yaml
+#  extra_files:
+#    - glob: default.yaml
+#    - glob: crds.yaml
 #dockers:
 #  - goos: linux
 #    goarch: amd64
