@@ -1,5 +1,5 @@
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY keycloak-operator /usr/local/bin
+COPY keycloak-operator /bin
 USER 65532:65532
-ENTRYPOINT ["/usr/local/bin/keycloak-operator"]
+ENTRYPOINT ["/bin/keycloak-operator"]

@@ -35,7 +35,7 @@ archives:
     - goos: windows
       format: zip
     files:
-      - config/**/*
+      - dist/config.yaml
       - LICENSE
 checksum:
   name_template: 'checksums.txt'
