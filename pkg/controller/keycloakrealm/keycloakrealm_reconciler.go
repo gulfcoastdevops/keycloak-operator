@@ -39,6 +39,10 @@ func (i *KeycloakRealmReconciler) ReconcileRealmCreate(state *common.RealmState,
 		desired.AddAction(i.getDesiredUserState(state, cr, user))
 	}
 
+	for _, clientScope := range cr.Spec.Realm.ClientScopes {
+		desired.AddAction(i.getDesiredClientScopeState(state, cr, clientScope))
+	}
+
 	desired.AddAction(i.getBrowserRedirectorDesiredState(state, cr))
 
 	return desired
@@ -102,5 +106,18 @@ func (i *KeycloakRealmReconciler) getDesiredUserState(state *common.RealmState, 
 		}
 	}
 
+	return nil
+}
+
+func (i *KeycloakRealmReconciler) getDesiredClientScopeState(state *common.RealmState, cr *kc.KeycloakRealm, clientScope kc.KeycloakClientScope) common.ClusterAction {
+	val, ok := state.RealmClientScope[clientScope.Name]
+	// If the client scope is not found, create it
+	if !ok || val == nil {
+		return &common.CreateClientScopeAction{
+			Ref:   &clientScope,
+			Realm: cr.Spec.Realm.Realm,
+			Msg:   fmt.Sprintf("create client scope %v in realm %v/%v", clientScope.Name, cr.Namespace, cr.Spec.Realm.Realm),
+		}
+	}
 	return nil
 }
