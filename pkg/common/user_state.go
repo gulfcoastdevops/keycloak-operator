@@ -70,6 +70,21 @@ func (i *UserState) readUser(client KeycloakInterface, user *v1alpha1.KeycloakUs
 		}
 		return keycloakUser, nil
 	}
+	if user.Spec.User.ID == "" {
+		keycloakUser, err := client.FindUserByUsername(user.Spec.User.UserName, realm)
+		if err != nil {
+			return nil, err
+		}
+		return keycloakUser, nil
+	}
+	if user.Spec.User.ID == "" && user.Spec.User.Email != "" {
+		keycloakUser, err := client.FindUserByEmail(user.Spec.User.Email, realm)
+		if err != nil {
+			return nil, err
+		}
+		return keycloakUser, nil
+	}
+
 	return nil, nil
 }
 
