@@ -91,6 +91,10 @@ func (c *Client) CreateRealm(realm *v1alpha1.KeycloakRealm) (string, error) {
 	return c.create(realm.Spec.Realm, "realms", "realm")
 }
 
+func (c *Client) CreateClientScope(obj *v1alpha1.KeycloakClientScope, realm string) (string, error) {
+	return c.create(obj, fmt.Sprintf("realms/%s/client-scopes", realm), "client-scope")
+}
+
 func (c *Client) CreateClient(client *v1alpha1.KeycloakAPIClient, realmName string) (string, error) {
 	return c.create(client, fmt.Sprintf("realms/%s/clients", realmName), "client")
 }
@@ -934,6 +938,8 @@ type KeycloakInterface interface {
 	UpdateRealm(specRealm *v1alpha1.KeycloakRealm) error
 	DeleteRealm(realmName string) error
 	ListRealms() ([]*v1alpha1.KeycloakRealm, error)
+
+	CreateClientScope(obj *v1alpha1.KeycloakClientScope, realm string) (string, error)
 
 	ListRealmRoleClientRoleComposites(realmName, roleID, clientID string) ([]v1alpha1.RoleRepresentation, error)
 	AddRealmRoleComposites(realmName, roleID string, roles *[]v1alpha1.RoleRepresentation) error

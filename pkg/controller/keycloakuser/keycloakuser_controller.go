@@ -176,6 +176,12 @@ func (r *ReconcileKeycloakUser) Reconcile(ctx context.Context, request reconcile
 				return r.ManageError(instance, err)
 			}
 			reconciler := NewKeycloakuserReconciler(keycloak, realm)
+
+			// Set the user ID if we found an existing user
+			if instance.Spec.User.ID == "" && userState.User.ID != "" {
+				instance.Spec.User.ID = userState.User.ID
+			}
+
 			desiredState := reconciler.Reconcile(userState, instance)
 
 			actionRunner := common.NewClusterAndKeycloakActionRunner(ctx, r.client, r.scheme, instance, authenticated)

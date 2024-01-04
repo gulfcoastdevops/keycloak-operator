@@ -27,6 +27,9 @@ type ActionRunner interface {
 	Delete(obj runtime.Object) error
 	CreateRealm(obj *v1alpha1.KeycloakRealm) error
 	DeleteRealm(obj *v1alpha1.KeycloakRealm) error
+
+	CreateClientScope(obj *v1alpha1.KeycloakClientScope, realm string) error
+
 	CreateClient(keycloakClient *v1alpha1.KeycloakClient, Realm string) error
 	DeleteClient(keycloakClient *v1alpha1.KeycloakClient, Realm string) error
 	UpdateClient(keycloakClient *v1alpha1.KeycloakClient, Realm string) error
@@ -246,6 +249,14 @@ func (i *ClusterActionRunner) DeleteRealm(obj *v1alpha1.KeycloakRealm) error {
 	return i.keycloakClient.DeleteRealm(obj.Spec.Realm.Realm)
 }
 
+func (i *ClusterActionRunner) CreateClientScope(obj *v1alpha1.KeycloakClientScope, realm string) error {
+	if i.keycloakClient == nil {
+		return errors.Errorf("cannot perform realm scope create when client is nil")
+	}
+	_, err := i.keycloakClient.CreateClientScope(obj, realm)
+	return err
+}
+
 func (i *ClusterActionRunner) DeleteClient(obj *v1alpha1.KeycloakClient, realm string) error {
 	if i.keycloakClient == nil {
 		return errors.Errorf("cannot perform client delete when client is nil")
@@ -425,6 +436,12 @@ type GenericDeleteAction struct {
 type CreateRealmAction struct {
 	Ref *v1alpha1.KeycloakRealm
 	Msg string
+}
+
+type CreateClientScopeAction struct {
+	Ref   *v1alpha1.KeycloakClientScope
+	Realm string
+	Msg   string
 }
 
 type CreateClientAction struct {
@@ -615,6 +632,10 @@ func (i GenericDeleteAction) Run(runner ActionRunner) (string, error) {
 
 func (i CreateRealmAction) Run(runner ActionRunner) (string, error) {
 	return i.Msg, runner.CreateRealm(i.Ref)
+}
+
+func (i CreateClientScopeAction) Run(runner ActionRunner) (string, error) {
+	return i.Msg, runner.CreateClientScope(i.Ref, i.Realm)
 }
 
 func (i CreateClientAction) Run(runner ActionRunner) (string, error) {

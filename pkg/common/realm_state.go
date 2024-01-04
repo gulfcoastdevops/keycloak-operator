@@ -13,6 +13,7 @@ import (
 type RealmState struct {
 	Realm            *kc.KeycloakRealm
 	RealmUserSecrets map[string]*v1.Secret
+	RealmClientScope map[string]*kc.KeycloakClientScope
 	Context          context.Context
 	Keycloak         *kc.Keycloak
 }
@@ -32,20 +33,29 @@ func (i *RealmState) Read(cr *kc.KeycloakRealm, realmClient KeycloakInterface, c
 	}
 
 	i.Realm = realm
-	if realm == nil || len(cr.Spec.Realm.Users) == 0 {
-		return nil
+	if realm != nil && len(cr.Spec.Realm.Users) > 0 {
+		// Get the state of the realm users
+		i.RealmUserSecrets = make(map[string]*v1.Secret)
+		for _, user := range cr.Spec.Realm.Users {
+			secret, err := i.readRealmUserSecret(cr, user, controllerClient)
+			if err != nil {
+				return err
+			}
+			i.RealmUserSecrets[user.UserName] = secret
+
+			cr.UpdateStatusSecondaryResources(SecretKind, model.GetRealmUserSecretName(i.Keycloak.Namespace, cr.Spec.Realm.Realm, user.UserName))
+		}
+
 	}
 
-	// Get the state of the realm users
-	i.RealmUserSecrets = make(map[string]*v1.Secret)
-	for _, user := range cr.Spec.Realm.Users {
-		secret, err := i.readRealmUserSecret(cr, user, controllerClient)
+	// Get the state of realm scopes
+	i.RealmClientScope = make(map[string]*kc.KeycloakClientScope)
+	for _, scope := range cr.Spec.Realm.ClientScopes {
+		s, err := i.readRealmClientScope(cr, scope, realmClient)
 		if err != nil {
 			return err
 		}
-		i.RealmUserSecrets[user.UserName] = secret
-
-		cr.UpdateStatusSecondaryResources(SecretKind, model.GetRealmUserSecretName(i.Keycloak.Namespace, cr.Spec.Realm.Realm, user.UserName))
+		i.RealmClientScope[scope.Name] = s
 	}
 
 	return nil
@@ -65,4 +75,21 @@ func (i *RealmState) readRealmUserSecret(realm *kc.KeycloakRealm, user *kc.Keycl
 	}
 
 	return secret, err
+}
+
+func (i *RealmState) readRealmClientScope(cr *kc.KeycloakRealm, scope kc.KeycloakClientScope, realmClient KeycloakInterface) (*kc.KeycloakClientScope, error) {
+	// Get the state of the realm client scopes
+	clientScope, err := realmClient.ListAvailableClientScopes(cr.Spec.Realm.Realm)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find the client scope
+	for _, s := range clientScope {
+		if s.Name == scope.Name {
+			return &s, nil
+		}
+	}
+
+	return nil, nil
 }
