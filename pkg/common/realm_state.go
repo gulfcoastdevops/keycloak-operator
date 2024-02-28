@@ -49,13 +49,15 @@ func (i *RealmState) Read(cr *kc.KeycloakRealm, realmClient KeycloakInterface, c
 	}
 
 	// Get the state of realm scopes
-	i.RealmClientScope = make(map[string]*kc.KeycloakClientScope)
-	for _, scope := range cr.Spec.Realm.ClientScopes {
-		s, err := i.readRealmClientScope(cr, scope, realmClient)
-		if err != nil {
-			return err
+	if realm != nil && len(cr.Spec.Realm.ClientScopes) > 0 {
+		i.RealmClientScope = make(map[string]*kc.KeycloakClientScope)
+		for _, scope := range cr.Spec.Realm.ClientScopes {
+			s, err := i.readRealmClientScope(cr, scope, realmClient)
+			if err != nil {
+				return err
+			}
+			i.RealmClientScope[scope.Name] = s
 		}
-		i.RealmClientScope[scope.Name] = s
 	}
 
 	return nil
