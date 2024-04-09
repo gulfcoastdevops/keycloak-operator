@@ -178,7 +178,7 @@ func (r *ReconcileKeycloakUser) Reconcile(ctx context.Context, request reconcile
 			reconciler := NewKeycloakuserReconciler(keycloak, realm)
 
 			// Set the user ID if we found an existing user
-			if instance.Spec.User.ID == "" && userState.User != nil && userState.User.ID != "" {
+			if userState.User != nil && userState.User.ID != "" {
 				instance.Spec.User.ID = userState.User.ID
 			}
 
