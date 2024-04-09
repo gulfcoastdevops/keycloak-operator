@@ -32,7 +32,7 @@ func NewUserState(keycloak v1alpha1.Keycloak) *UserState {
 
 func (i *UserState) Read(keycloakClient KeycloakInterface, userClient client.Client, user *v1alpha1.KeycloakUser, realm v1alpha1.KeycloakRealm) error {
 	apiUser, err := i.readUser(keycloakClient, user, realm.Spec.Realm.Realm)
-	if err != nil {
+	if err != nil || apiUser == nil {
 		// If there was an error reading the user then don't attempt
 		// to read the roles. This user might not yet exist
 		return nil
@@ -68,7 +68,12 @@ func (i *UserState) readUser(client KeycloakInterface, user *v1alpha1.KeycloakUs
 		if err != nil {
 			return nil, err
 		}
-		return keycloakUser, nil
+
+		// If the user is not found by ID, try to find it by username
+		if keycloakUser == nil {
+			keycloakUser, err = client.FindUserByUsername(user.Spec.User.UserName, realm)
+		}
+		return keycloakUser, err
 	}
 	if user.Spec.User.ID == "" {
 		keycloakUser, err := client.FindUserByUsername(user.Spec.User.UserName, realm)
