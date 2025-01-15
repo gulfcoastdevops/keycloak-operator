@@ -1098,6 +1098,7 @@ func getKCServerCert(secretClient *kubernetes.Clientset, kc v1alpha1.Keycloak) (
 func getKeycloakURL(kc v1alpha1.Keycloak, requester Requester) (string, error) {
 	var kcURL string
 	var err error
+	return "https://auth.c01.truiem.xyz:443", err
 
 	if kc.Status.InternalURL != "" {
 		kcURL, err = validateKeycloakURL(kc.Status.InternalURL, requester)
