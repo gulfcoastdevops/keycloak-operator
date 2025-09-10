@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -1012,7 +1013,7 @@ var _ KeycloakInterface = &Client{}
 
 //go:generate moq -out keycloakClientFactory_moq.go . KeycloakClientFactory
 
-//KeycloakClientFactory interface
+// KeycloakClientFactory interface
 type KeycloakClientFactory interface {
 	AuthenticatedClient(kc v1alpha1.Keycloak) (KeycloakInterface, error)
 }
@@ -1098,7 +1099,10 @@ func getKCServerCert(secretClient *kubernetes.Clientset, kc v1alpha1.Keycloak) (
 func getKeycloakURL(kc v1alpha1.Keycloak, requester Requester) (string, error) {
 	var kcURL string
 	var err error
-	return "https://auth.c01.truiem.xyz:443", err
+
+	if os.Getenv("ENV") == "test" && os.Getenv("KEYCLOAK_URL") != "" {
+		return os.Getenv("KEYCLOAK_URL"), nil
+	}
 
 	if kc.Status.InternalURL != "" {
 		kcURL, err = validateKeycloakURL(kc.Status.InternalURL, requester)

@@ -104,5 +104,6 @@ replace (
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.14.4
 )
 
-go 1.21
-toolchain go1.23.7
+go 1.23.0
+
+toolchain go1.24.5
