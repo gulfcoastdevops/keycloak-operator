@@ -13,6 +13,12 @@ updates:
     reviewers:
       - "gulfcoastdevops/goreviewer"
       - kalinon
+      - caseiber
+      - ES0T
+    groups:
+      go-group-all:
+        patterns:
+          - "*"  # Group all Go module updates into one PR  
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
