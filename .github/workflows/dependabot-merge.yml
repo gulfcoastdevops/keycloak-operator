@@ -1,0 +1,24 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+jobs:
+  dependabot-automerge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+    steps:
+      - name: Dependabot Squash Bot
+        uses: moltar-bot/dependabot-squash-bot@v1
+        with:
+          github_token: ${{ secrets.PAT }}
+          min_approvals: 1
