@@ -54,13 +54,15 @@ func TestClientSecretReconciledPreservesNonTrueXPAnnotations(t *testing.T) {
 		},
 	}
 	current := &v1.Secret{ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{
-		"truexp.truiem.io/tenant": "old",
-		"example.com/keep":        "kept",
+		"truexp.truiem.io/tenant":       "old",
+		"truexp.truiem.io/stale-target": "remove-me",
+		"example.com/keep":              "kept",
 	}}}
 
 	reconciled := ClientSecretReconciled(cr, current)
 
 	assert.Equal(t, "delta", reconciled.Annotations["truexp.truiem.io/tenant"])
+	assert.NotContains(t, reconciled.Annotations, "truexp.truiem.io/stale-target")
 	assert.Equal(t, "kept", reconciled.Annotations["example.com/keep"])
 	assert.Equal(t, []byte("truexp-service-account"), reconciled.Data[ClientSecretClientIDProperty])
 	assert.Equal(t, []byte("generated-secret"), reconciled.Data[ClientSecretClientSecretProperty])
