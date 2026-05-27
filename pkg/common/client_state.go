@@ -36,6 +36,15 @@ func NewClientState(context context.Context, realm *kc.KeycloakRealm, keycloak k
 }
 
 func (i *ClientState) Read(context context.Context, cr *kc.KeycloakClient, realmClient KeycloakInterface, controllerClient client.Client) error {
+	var err error
+
+	// Client scope reconciliation needs realm-level available scopes even when
+	// the Keycloak client itself is missing and must be recreated.
+	i.AvailableClientScopes, err = realmClient.ListAvailableClientScopes(i.Realm.Spec.Realm.Realm)
+	if err != nil {
+		return err
+	}
+
 	if cr.Spec.Client.ID == "" {
 		return nil
 	}
@@ -113,14 +122,6 @@ func (i *ClientState) Read(context context.Context, cr *kc.KeycloakClient, realm
 }
 
 func (i *ClientState) readClientScopes(cr *kc.KeycloakClient, realmClient KeycloakInterface) (err error) {
-	// It is not strictly a property of the client but rather of the realm.
-	// However could not figure out a better way to convey it to populate default and optional
-	// client scopes which requires client scope IDs.
-	i.AvailableClientScopes, err = realmClient.ListAvailableClientScopes(i.Realm.Spec.Realm.Realm)
-	if err != nil {
-		return err
-	}
-
 	i.DefaultClientScopes, err = realmClient.ListDefaultClientScopes(cr.Spec.Client.ID, i.Realm.Spec.Realm.Realm)
 	if err != nil {
 		return err
