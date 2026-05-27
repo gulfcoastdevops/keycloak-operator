@@ -56,6 +56,51 @@ func TestKeycloakClientReconciler_Test_Creating_Client(t *testing.T) {
 	assert.Equal(t, []byte("test"), model.ClientSecret(cr).Data[model.ClientSecretClientSecretProperty])
 }
 
+func TestKeycloakClientReconciler_Test_Creating_Client_With_Default_Client_Scope(t *testing.T) {
+	// given
+	keycloakCr := v1alpha1.Keycloak{}
+	cr := &v1alpha1.KeycloakClient{
+		ObjectMeta: v13.ObjectMeta{
+			Name:      "test",
+			Namespace: "test",
+		},
+		Spec: v1alpha1.KeycloakClientSpec{
+			RealmSelector: &v13.LabelSelector{
+				MatchLabels: map[string]string{"application": "sso"},
+			},
+			Client: &v1alpha1.KeycloakAPIClient{
+				ID:                  "client-uuid",
+				ClientID:            "test",
+				Secret:              "test",
+				DefaultClientScopes: []string{"roles"},
+			},
+		},
+	}
+
+	currentState := &common.ClientState{
+		Realm: &v1alpha1.KeycloakRealm{
+			Spec: v1alpha1.KeycloakRealmSpec{
+				Realm: &v1alpha1.KeycloakAPIRealm{
+					Realm: "test",
+				},
+			},
+		},
+		AvailableClientScopes: []v1alpha1.KeycloakClientScope{{Name: "roles", ID: "scope-uuid"}},
+	}
+
+	// when
+	reconciler := NewKeycloakClientReconciler(keycloakCr)
+	desiredState := reconciler.Reconcile(currentState, cr)
+
+	// then
+	assert.IsType(t, common.PingAction{}, desiredState[0])
+	assert.IsType(t, common.CreateClientAction{}, desiredState[1])
+	assert.IsType(t, common.GenericCreateAction{}, desiredState[2])
+	assert.IsType(t, common.UpdateClientDefaultClientScopeAction{}, desiredState[3])
+	assert.Equal(t, "scope-uuid", desiredState[3].(common.UpdateClientDefaultClientScopeAction).ClientScope.ID)
+	assert.Equal(t, 4, len(desiredState))
+}
+
 func TestKeycloakClientReconciler_Test_Creating_ClientWithNonAlfhaNumCharsInClientID(t *testing.T) {
 	// given
 	keycloakCr := v1alpha1.Keycloak{}
